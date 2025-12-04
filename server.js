@@ -265,31 +265,25 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // Serve static images
-    if (pathname.startsWith('/images/')) {
-        const imageName = pathname.substring(8); // Remove '/images/'
-        const imagePath = path.join(PUBLIC_DIR, imageName);
-
-        if (fs.existsSync(imagePath)) {
-            const ext = path.extname(imagePath).toLowerCase();
-            const contentType = {
-                '.jpg': 'image/jpeg',
-                '.jpeg': 'image/jpeg',
-                '.png': 'image/png',
-                '.gif': 'image/gif'
-            }[ext] || 'application/octet-stream';
-
-            res.writeHead(200, {
-                'Content-Type': contentType,
-                'Cache-Control': 'no-store'
-            });
-            res.end(fs.readFileSync(imagePath));
-        } else {
-            res.writeHead(404, { 'Content-Type': 'text/plain' });
-            res.end('Image not found');
-        }
-        return;
+   // Serve files from /public directly at /public/<filename>
+if (pathname.startsWith('/public/')) {
+    const filePath = path.join(__dirname, pathname);
+    if (fs.existsSync(filePath)) {
+        const ext = path.extname(filePath).toLowerCase();
+        const types = {
+            '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+            '.png': 'image/png', '.gif': 'image/gif'
+        };
+        res.writeHead(200, {
+            'Content-Type': types[ext] || 'application/octet-stream',
+            'Cache-Control': 'no-store'
+        });
+        return res.end(fs.readFileSync(filePath));
+    } else {
+        res.writeHead(404);
+        return res.end("Not found");
     }
+}
 
     // Serve HTML page
     if (pathname === '/' || pathname === '/index.html') {
@@ -409,4 +403,5 @@ process.on('uncaughtException', (error) => {
 
 process.on('unhandledRejection', (reason, promise) => {
     console.error('❌ Unhandled rejection at:', promise, 'reason:', reason);
+
 });
