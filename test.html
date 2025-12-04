@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Upload</title>
+</head>
+<body>
+    <h1>Test Image Upload</h1>
+
+    <h2>1. Test Server Connection</h2>
+    <button onclick="testServer()">Test Server</button>
+    <div id="testResult"></div>
+
+    <h2>2. Test Upload</h2>
+    <input type="file" id="fileInput">
+    <button onclick="testUpload()">Test Upload</button>
+    <div id="uploadResult"></div>
+
+    <h2>3. Check Uploaded Image</h2>
+    <button onclick="checkImage()">Check Image</button>
+    <div id="imageResult"></div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        async function testServer() {
+            try {
+                const response = await fetch(API_URL + '/api/test');
+                const data = await response.json();
+                document.getElementById('testResult').innerHTML =
+                    `<p style="color: green">✅ ${data.message}</p>`;
+            } catch (error) {
+                document.getElementById('testResult').innerHTML =
+                    `<p style="color: red">❌ ${error.message}</p>`;
+            }
+        }
+
+        async function testUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch(API_URL + '/api/upload?name=test', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('uploadResult').innerHTML =
+                        `<p style="color: green">✅ ${data.message}</p>`;
+                } else {
+                    document.getElementById('uploadResult').innerHTML =
+                        `<p style="color: red">❌ ${data.error}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('uploadResult').innerHTML =
+                    `<p style="color: red">❌ ${error.message}</p>`;
+            }
+        }
+
+        async function checkImage() {
+            try {
+                const response = await fetch(API_URL + '/api/getImage?name=test');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('imageResult').innerHTML =
+                        `<p style="color: green">✅ Image found: ${data.name}</p>
+                         <img src="${API_URL}${data.image}" style="max-width: 300px; border: 1px solid #ccc;">`;
+                } else {
+                    document.getElementById('imageResult').innerHTML =
+                        `<p style="color: red">❌ ${data.error}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('imageResult').innerHTML =
+                    `<p style="color: red">❌ ${error.message}</p>`;
+            }
+        }
+
+        // Auto-test server on load
+        testServer();
+    </script>
+</body>
+</html>

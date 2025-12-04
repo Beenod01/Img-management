@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Management System - Assignment 4</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; background: #f5f5f5; }
+        .box { background: white; padding: 20px; margin: 20px 0; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+        h2 { color: #444; margin: 0 0 15px 0; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
+        input[type="file"] { width: 100%; padding: 10px 0; margin-bottom: 10px; }
+        button { padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #0b7dda; }
+        .upload-btn { background: #4CAF50; }
+        .upload-btn:hover { background: #45a049; }
+        .image-container { text-align: center; padding: 20px; border: 2px dashed #ddd; border-radius: 10px; margin: 15px 0; min-height: 300px; display: flex; align-items: center; justify-content: center; }
+        #imageDisplay { max-width: 100%; max-height: 300px; border-radius: 5px; display: none; }
+        .no-image { color: #999; }
+        .no-image span { font-size: 48px; display: block; margin-bottom: 10px; }
+        .result { padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .quick-buttons { margin-top: 15px; }
+        .quick-btn { padding: 5px 10px; margin: 0 5px 5px 0; background: #e0e0e0; border: none; border-radius: 3px; cursor: pointer; }
+        .quick-btn.active { background: #2196F3; color: white; }
+        .server-status { background: #e8f4fd; padding: 10px; border-radius: 5px; margin: 15px 0; text-align: center; }
+        .instructions { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }
+        .loading { display: none; text-align: center; padding: 10px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Management System</h1>
+        <div class="subtitle">Assignment 4 - Internet Tools</div>
+
+        <div id="serverStatus" class="server-status">Checking server connection...</div>
+
+        <!-- Search Section -->
+        <div class="box">
+            <h2>Search Image</h2>
+            <div class="input-group">
+                <input type="text" id="searchName" value="tom" placeholder="Enter name (e.g., tom)">
+                <button onclick="searchImage()">Search</button>
+            </div>
+
+            <div class="image-container">
+                <img id="imageDisplay" src="" alt="Image">
+                <div id="noImage" class="no-image">
+                    <div style="font-size: 48px; margin-bottom: 10px;">📷</div>
+                    <p>No image to display</p>
+                </div>
+            </div>
+
+            <div id="searchResult" class="result"></div>
+
+            <div class="quick-buttons">
+                Quick search:
+                <button onclick="quickSearch('tom')" class="quick-btn active">tom</button>
+                <button onclick="quickSearch('jerry')" class="quick-btn">jerry</button>
+                <button onclick="quickSearch('dog')" class="quick-btn">dog</button>
+                <button onclick="quickSearch('cat')" class="quick-btn">cat</button>
+            </div>
+
+            <div id="searchLoading" class="loading">Searching...</div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="box">
+            <h2>Upload Image</h2>
+            <input type="text" id="uploadName" placeholder="Enter name (e.g., tom)">
+            <input type="file" id="fileInput" accept="image/*">
+            <button onclick="uploadImage()" class="upload-btn">Upload Image</button>
+
+            <div id="uploadResult" class="result"></div>
+            <div id="uploadLoading" class="loading">Uploading...</div>
+        </div>
+
+        <div class="instructions">
+            <h3>Assignment Steps:</h3>
+            <ol>
+                <li>Search for "tom" (no image initially)</li>
+                <li>Upload any image with name "tom"</li>
+                <li>Search again - new image appears immediately</li>
+                <li>Check public folder - tom.jpg is created/replaced</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+        let selectedFile = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkServerStatus();
+            searchImage();
+
+            document.getElementById('fileInput').addEventListener('change', function(e) {
+                selectedFile = e.target.files[0];
+            });
+
+            document.getElementById('searchName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') searchImage();
+            });
+
+            document.getElementById('uploadName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') uploadImage();
+            });
+        });
+
+        // Check server status
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${API_URL}/api/test`);
+                const data = await response.json();
+
+                const fileCount = data.files ? data.files.length : 0;
+                document.getElementById('serverStatus').innerHTML =
+                    '<strong style="color: #4CAF50;">✓ Server Connected</strong><br>' +
+                    '<small>' + fileCount + ' image(s) in public folder</small>';
+            } catch (error) {
+                document.getElementById('serverStatus').innerHTML =
+                    '<strong style="color: #f44336;">✗ Server Not Connected</strong><br>' +
+                    '<small>Make sure server.js is running</small>';
+            }
+        }
+
+        // Search image
+        async function searchImage() {
+            const name = document.getElementById('searchName').value.trim();
+            if (!name) return;
+
+            showLoading('searchLoading', true);
+
+            try {
+                const response = await fetch(`${API_URL}/api/getImage?name=${encodeURIComponent(name)}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    displayImage(`${API_URL}${data.image}`);
+                    showResult('searchResult', '✓ Showing: ' + data.name, 'success');
+                    updateActiveButton(name);
+                } else {
+                    hideImage();
+                    showResult('searchResult', '✗ ' + data.error, 'error');
+                }
+            } catch (error) {
+                hideImage();
+                showResult('searchResult', '✗ Server error', 'error');
+            }
+
+            showLoading('searchLoading', false);
+        }
+
+        // Upload image
+        async function uploadImage() {
+            const name = document.getElementById('uploadName').value.trim();
+            if (!name || !selectedFile) {
+                showResult('uploadResult', 'Enter name and select file', 'error');
+                return;
+            }
+
+            if (selectedFile.size > 10 * 1024 * 1024) {
+                showResult('uploadResult', 'File too large (max 10MB)', 'error');
+                return;
+            }
+
+            showLoading('uploadLoading', true);
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+
+            try {
+                const response = await fetch(`${API_URL}/api/upload?name=${encodeURIComponent(name)}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showResult('uploadResult', '✓ ' + data.message, 'success');
+
+                    // Clear form
+                    document.getElementById('uploadName').value = '';
+                    document.getElementById('fileInput').value = '';
+                    selectedFile = null;
+
+                    // Update server status
+                    checkServerStatus();
+
+                    // Update if same name
+                    if (name.toLowerCase() === document.getElementById('searchName').value.trim().toLowerCase()) {
+                        setTimeout(searchImage, 500);
+                    }
+                } else {
+                    showResult('uploadResult', '✗ ' + data.error, 'error');
+                }
+            } catch (error) {
+                showResult('uploadResult', '✗ Upload failed', 'error');
+            }
+
+            showLoading('uploadLoading', false);
+        }
+
+        // Helper functions
+        function quickSearch(name) {
+            document.getElementById('searchName').value = name;
+            searchImage();
+            updateActiveButton(name);
+        }
+
+        function updateActiveButton(name) {
+            document.querySelectorAll('.quick-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === name);
+            });
+        }
+
+        function displayImage(src) {
+            const img = document.getElementById('imageDisplay');
+            const noImg = document.getElementById('noImage');
+
+            img.onload = function() {
+                img.style.display = 'block';
+                noImg.style.display = 'none';
+            };
+
+            img.onerror = function() {
+                hideImage();
+                showResult('searchResult', '✗ Failed to load image', 'error');
+            };
+
+            img.src = src;
+        }
+
+        function hideImage() {
+            document.getElementById('imageDisplay').style.display = 'none';
+            document.getElementById('noImage').style.display = 'block';
+        }
+
+        function showResult(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = 'result ' + type;
+
+            if (type === 'success') {
+                setTimeout(() => element.textContent = '', 3000);
+            }
+        }
+
+        function showLoading(elementId, show) {
+            document.getElementById(elementId).style.display = show ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>
