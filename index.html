@@ -22,10 +22,41 @@ button:hover { background: #0b7dda; }
 .upload-btn { background: #4CAF50; }
 .upload-btn:hover { background: #45a049; }
 
-        .image-container { text-align: center; padding: 20px; border: 2px dashed #ddd; border-radius: 10px; margin: 15px 0; min-height: 300px; display: flex; align-items: center; justify-content: center; }
-        #imageDisplay { max-width: 100%; max-height: 300px; border-radius: 5px; display: none; }
-        .no-image { color: #999; }
-        .no-image span { font-size: 48px; display: block; margin-bottom: 10px; }
+        .image-container { 
+    text-align: center; 
+    padding: 25px; 
+    border: 2px dashed #ccc; 
+    border-radius: 12px; 
+    margin: 20px 0; 
+    min-height: 320px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    background: #fafafa; 
+    transition: border 0.3s, background 0.3s;
+}
+.image-container:hover { border-color: #2196F3; background: #f0f8ff; }
+
+#imageDisplay { 
+    max-width: 100%; 
+    max-height: 300px; 
+    border-radius: 6px; 
+    display: none; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.no-image { 
+    color: #bbb; 
+    text-align: center; 
+    transition: color 0.3s;
+}
+.no-image span { 
+    font-size: 60px; 
+    display: block; 
+    margin-bottom: 12px; 
+}
+.no-image p { font-size: 16px; }
+
         .result { padding: 10px; border-radius: 5px; margin: 10px 0; }
         .success { background: #d4edda; color: #155724; }
         .error { background: #f8d7da; color: #721c24; }
@@ -265,4 +296,5 @@ button:hover { background: #0b7dda; }
 </body>
 
 </html>
+
 
